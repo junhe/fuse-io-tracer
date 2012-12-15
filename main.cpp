@@ -15,7 +15,7 @@
 #include <config.h>
 #endif
 
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 
 #include <fuse.h>
 #include <ulockmgr.h>
@@ -90,7 +90,7 @@ struct pat_dirp {
 static int pat_opendir(const char *path, struct fuse_file_info *fi)
 {
 	int res;
-	struct pat_dirp *d = malloc(sizeof(struct pat_dirp));
+	struct pat_dirp *d = (struct pat_dirp *)malloc(sizeof(struct pat_dirp));
 	if (d == NULL)
 		return -ENOMEM;
 
@@ -341,13 +341,13 @@ static int pat_read_buf(const char *path, struct fuse_bufvec **bufp,
 
 	(void) path;
 
-	src = malloc(sizeof(struct fuse_bufvec));
+	src = (struct fuse_bufvec *) malloc(sizeof(struct fuse_bufvec));
 	if (src == NULL)
 		return -ENOMEM;
 
 	*src = FUSE_BUFVEC_INIT(size);
 
-	src->buf[0].flags = FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK;
+	src->buf[0].flags = (fuse_buf_flags)(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK);
 	src->buf[0].fd = fi->fh;
 	src->buf[0].pos = offset;
 
@@ -376,7 +376,7 @@ static int pat_write_buf(const char *path, struct fuse_bufvec *buf,
 
 	(void) path;
 
-	dst.buf[0].flags = FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK;
+	dst.buf[0].flags = (fuse_buf_flags)(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK);
 	dst.buf[0].fd = fi->fh;
 	dst.buf[0].pos = offset;
 
@@ -494,8 +494,9 @@ static int pat_lock(const char *path, struct fuse_file_info *fi, int cmd,
 {
 	(void) path;
 
-	return ulockmgr_op(fi->fh, cmd, lock, &fi->lock_owner,
-			   sizeof(fi->lock_owner));
+//    ret =  ulockmgr_op(fi->fh, cmd, lock, &fi->lock_owner,
+//			   sizeof(fi->lock_owner));
+    return EXIT_FAILURE;
 }
 
 static int pat_flock(const char *path, struct fuse_file_info *fi, int op)
