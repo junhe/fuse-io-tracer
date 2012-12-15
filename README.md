@@ -13,8 +13,8 @@ or
 
 /tmp/myfile open NA NA 28423477752.3234243
 
-The time is got by gettimeofday(). When the data file
-is opened, the trace file is opened at the same time.
+The time is got by gettimeofday(). When the FUSE program
+is run, the trace file is opened at the same time.
 The trace file is located where the FUSE program is run.
-When the data file is closed, the trace file is closed.
+When the FUSE program is closed, the trace file is closed.
 The trace file is named the same as time-created.log.
