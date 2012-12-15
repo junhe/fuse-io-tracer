@@ -6,7 +6,7 @@
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 
-  gcc -Wall fusepat_fh.c `pkg-config fuse --cflags --libs` -lulockmgr -o fusepat_fh
+  gcc -Wall fusetrc_fh.c `pkg-config fuse --cflags --libs` -lulockmgr -o fusetrc_fh
 */
 
 #define FUSE_USE_VERSION 26
@@ -33,7 +33,7 @@
 #endif
 #include <sys/file.h> /* flock(2) */
 
-static int pat_getattr(const char *path, struct stat *stbuf)
+static int trc_getattr(const char *path, struct stat *stbuf)
 {
 	int res;
 
@@ -44,7 +44,7 @@ static int pat_getattr(const char *path, struct stat *stbuf)
 	return 0;
 }
 
-static int pat_fgetattr(const char *path, struct stat *stbuf,
+static int trc_fgetattr(const char *path, struct stat *stbuf,
 			struct fuse_file_info *fi)
 {
 	int res;
@@ -58,7 +58,7 @@ static int pat_fgetattr(const char *path, struct stat *stbuf,
 	return 0;
 }
 
-static int pat_access(const char *path, int mask)
+static int trc_access(const char *path, int mask)
 {
 	int res;
 
@@ -69,7 +69,7 @@ static int pat_access(const char *path, int mask)
 	return 0;
 }
 
-static int pat_readlink(const char *path, char *buf, size_t size)
+static int trc_readlink(const char *path, char *buf, size_t size)
 {
 	int res;
 
@@ -81,16 +81,16 @@ static int pat_readlink(const char *path, char *buf, size_t size)
 	return 0;
 }
 
-struct pat_dirp {
+struct trc_dirp {
 	DIR *dp;
 	struct dirent *entry;
 	off_t offset;
 };
 
-static int pat_opendir(const char *path, struct fuse_file_info *fi)
+static int trc_opendir(const char *path, struct fuse_file_info *fi)
 {
 	int res;
-	struct pat_dirp *d = (struct pat_dirp *)malloc(sizeof(struct pat_dirp));
+	struct trc_dirp *d = (struct trc_dirp *)malloc(sizeof(struct trc_dirp));
 	if (d == NULL)
 		return -ENOMEM;
 
@@ -107,15 +107,15 @@ static int pat_opendir(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static inline struct pat_dirp *get_dirp(struct fuse_file_info *fi)
+static inline struct trc_dirp *get_dirp(struct fuse_file_info *fi)
 {
-	return (struct pat_dirp *) (uintptr_t) fi->fh;
+	return (struct trc_dirp *) (uintptr_t) fi->fh;
 }
 
-static int pat_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+static int trc_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		       off_t offset, struct fuse_file_info *fi)
 {
-	struct pat_dirp *d = get_dirp(fi);
+	struct trc_dirp *d = get_dirp(fi);
 
 	(void) path;
 	if (offset != d->offset) {
@@ -147,16 +147,16 @@ static int pat_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-static int pat_releasedir(const char *path, struct fuse_file_info *fi)
+static int trc_releasedir(const char *path, struct fuse_file_info *fi)
 {
-	struct pat_dirp *d = get_dirp(fi);
+	struct trc_dirp *d = get_dirp(fi);
 	(void) path;
 	closedir(d->dp);
 	free(d);
 	return 0;
 }
 
-static int pat_mknod(const char *path, mode_t mode, dev_t rdev)
+static int trc_mknod(const char *path, mode_t mode, dev_t rdev)
 {
 	int res;
 
@@ -170,7 +170,7 @@ static int pat_mknod(const char *path, mode_t mode, dev_t rdev)
 	return 0;
 }
 
-static int pat_mkdir(const char *path, mode_t mode)
+static int trc_mkdir(const char *path, mode_t mode)
 {
 	int res;
 
@@ -181,7 +181,7 @@ static int pat_mkdir(const char *path, mode_t mode)
 	return 0;
 }
 
-static int pat_unlink(const char *path)
+static int trc_unlink(const char *path)
 {
 	int res;
 
@@ -192,7 +192,7 @@ static int pat_unlink(const char *path)
 	return 0;
 }
 
-static int pat_rmdir(const char *path)
+static int trc_rmdir(const char *path)
 {
 	int res;
 
@@ -203,7 +203,7 @@ static int pat_rmdir(const char *path)
 	return 0;
 }
 
-static int pat_symlink(const char *from, const char *to)
+static int trc_symlink(const char *from, const char *to)
 {
 	int res;
 
@@ -214,7 +214,7 @@ static int pat_symlink(const char *from, const char *to)
 	return 0;
 }
 
-static int pat_rename(const char *from, const char *to)
+static int trc_rename(const char *from, const char *to)
 {
 	int res;
 
@@ -225,7 +225,7 @@ static int pat_rename(const char *from, const char *to)
 	return 0;
 }
 
-static int pat_link(const char *from, const char *to)
+static int trc_link(const char *from, const char *to)
 {
 	int res;
 
@@ -236,7 +236,7 @@ static int pat_link(const char *from, const char *to)
 	return 0;
 }
 
-static int pat_chmod(const char *path, mode_t mode)
+static int trc_chmod(const char *path, mode_t mode)
 {
 	int res;
 
@@ -247,7 +247,7 @@ static int pat_chmod(const char *path, mode_t mode)
 	return 0;
 }
 
-static int pat_chown(const char *path, uid_t uid, gid_t gid)
+static int trc_chown(const char *path, uid_t uid, gid_t gid)
 {
 	int res;
 
@@ -258,7 +258,7 @@ static int pat_chown(const char *path, uid_t uid, gid_t gid)
 	return 0;
 }
 
-static int pat_truncate(const char *path, off_t size)
+static int trc_truncate(const char *path, off_t size)
 {
 	int res;
 
@@ -269,7 +269,7 @@ static int pat_truncate(const char *path, off_t size)
 	return 0;
 }
 
-static int pat_ftruncate(const char *path, off_t size,
+static int trc_ftruncate(const char *path, off_t size,
 			 struct fuse_file_info *fi)
 {
 	int res;
@@ -284,7 +284,7 @@ static int pat_ftruncate(const char *path, off_t size,
 }
 
 #ifdef HAVE_UTIMENSAT
-static int pat_utimens(const char *path, const struct timespec ts[2])
+static int trc_utimens(const char *path, const struct timespec ts[2])
 {
 	int res;
 
@@ -297,7 +297,7 @@ static int pat_utimens(const char *path, const struct timespec ts[2])
 }
 #endif
 
-static int pat_create(const char *path, mode_t mode, struct fuse_file_info *fi)
+static int trc_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
 	int fd;
 
@@ -309,7 +309,7 @@ static int pat_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int pat_open(const char *path, struct fuse_file_info *fi)
+static int trc_open(const char *path, struct fuse_file_info *fi)
 {
 	int fd;
 
@@ -321,7 +321,7 @@ static int pat_open(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int pat_read(const char *path, char *buf, size_t size, off_t offset,
+static int trc_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
 	int res;
@@ -334,7 +334,7 @@ static int pat_read(const char *path, char *buf, size_t size, off_t offset,
 	return res;
 }
 
-static int pat_read_buf(const char *path, struct fuse_bufvec **bufp,
+static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
 			size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	struct fuse_bufvec *src;
@@ -356,7 +356,7 @@ static int pat_read_buf(const char *path, struct fuse_bufvec **bufp,
 	return 0;
 }
 
-static int pat_write(const char *path, const char *buf, size_t size,
+static int trc_write(const char *path, const char *buf, size_t size,
 		     off_t offset, struct fuse_file_info *fi)
 {
 	int res;
@@ -369,7 +369,7 @@ static int pat_write(const char *path, const char *buf, size_t size,
 	return res;
 }
 
-static int pat_write_buf(const char *path, struct fuse_bufvec *buf,
+static int trc_write_buf(const char *path, struct fuse_bufvec *buf,
 		     off_t offset, struct fuse_file_info *fi)
 {
 	struct fuse_bufvec dst = FUSE_BUFVEC_INIT(fuse_buf_size(buf));
@@ -383,7 +383,7 @@ static int pat_write_buf(const char *path, struct fuse_bufvec *buf,
 	return fuse_buf_copy(&dst, buf, FUSE_BUF_SPLICE_NONBLOCK);
 }
 
-static int pat_statfs(const char *path, struct statvfs *stbuf)
+static int trc_statfs(const char *path, struct statvfs *stbuf)
 {
 	int res;
 
@@ -394,7 +394,7 @@ static int pat_statfs(const char *path, struct statvfs *stbuf)
 	return 0;
 }
 
-static int pat_flush(const char *path, struct fuse_file_info *fi)
+static int trc_flush(const char *path, struct fuse_file_info *fi)
 {
 	int res;
 
@@ -411,7 +411,7 @@ static int pat_flush(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int pat_release(const char *path, struct fuse_file_info *fi)
+static int trc_release(const char *path, struct fuse_file_info *fi)
 {
 	(void) path;
 	close(fi->fh);
@@ -419,7 +419,7 @@ static int pat_release(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int pat_fsync(const char *path, int isdatasync,
+static int trc_fsync(const char *path, int isdatasync,
 		     struct fuse_file_info *fi)
 {
 	int res;
@@ -440,7 +440,7 @@ static int pat_fsync(const char *path, int isdatasync,
 }
 
 #ifdef HAVE_POSIX_FALLOCATE
-static int pat_fallocate(const char *path, int mode,
+static int trc_fallocate(const char *path, int mode,
 			off_t offset, off_t length, struct fuse_file_info *fi)
 {
 	(void) path;
@@ -454,7 +454,7 @@ static int pat_fallocate(const char *path, int mode,
 
 #ifdef HAVE_SETXATTR
 /* xattr operations are optional and can safely be left unimplemented */
-static int pat_setxattr(const char *path, const char *name, const char *value,
+static int trc_setxattr(const char *path, const char *name, const char *value,
 			size_t size, int flags)
 {
 	int res = lsetxattr(path, name, value, size, flags);
@@ -463,7 +463,7 @@ static int pat_setxattr(const char *path, const char *name, const char *value,
 	return 0;
 }
 
-static int pat_getxattr(const char *path, const char *name, char *value,
+static int trc_getxattr(const char *path, const char *name, char *value,
 			size_t size)
 {
 	int res = lgetxattr(path, name, value, size);
@@ -472,7 +472,7 @@ static int pat_getxattr(const char *path, const char *name, char *value,
 	return res;
 }
 
-static int pat_listxattr(const char *path, char *list, size_t size)
+static int trc_listxattr(const char *path, char *list, size_t size)
 {
 	int res = llistxattr(path, list, size);
 	if (res == -1)
@@ -480,7 +480,7 @@ static int pat_listxattr(const char *path, char *list, size_t size)
 	return res;
 }
 
-static int pat_removexattr(const char *path, const char *name)
+static int trc_removexattr(const char *path, const char *name)
 {
 	int res = lremovexattr(path, name);
 	if (res == -1)
@@ -489,7 +489,7 @@ static int pat_removexattr(const char *path, const char *name)
 }
 #endif /* HAVE_SETXATTR */
 
-static int pat_lock(const char *path, struct fuse_file_info *fi, int cmd,
+static int trc_lock(const char *path, struct fuse_file_info *fi, int cmd,
 		    struct flock *lock)
 {
 	(void) path;
@@ -499,7 +499,7 @@ static int pat_lock(const char *path, struct fuse_file_info *fi, int cmd,
     return EXIT_FAILURE;
 }
 
-static int pat_flock(const char *path, struct fuse_file_info *fi, int op)
+static int trc_flock(const char *path, struct fuse_file_info *fi, int op)
 {
 	int res;
 	(void) path;
@@ -511,55 +511,55 @@ static int pat_flock(const char *path, struct fuse_file_info *fi, int op)
 	return 0;
 }
 
-static struct fuse_operations pat_oper;
+static struct fuse_operations trc_oper;
 void load_operations()
 {
-	pat_oper.getattr	= pat_getattr;
-	pat_oper.fgetattr	= pat_fgetattr;
-	pat_oper.access		= pat_access;
-	pat_oper.readlink	= pat_readlink;
-	pat_oper.opendir	= pat_opendir;
-	pat_oper.readdir	= pat_readdir;
-	pat_oper.releasedir	= pat_releasedir;
-	pat_oper.mknod		= pat_mknod;
-	pat_oper.mkdir		= pat_mkdir;
-	pat_oper.symlink	= pat_symlink;
-	pat_oper.unlink		= pat_unlink;
-	pat_oper.rmdir		= pat_rmdir;
-	pat_oper.rename		= pat_rename;
-	pat_oper.link		= pat_link;
-	pat_oper.chmod		= pat_chmod;
-	pat_oper.chown		= pat_chown;
-	pat_oper.truncate	= pat_truncate;
-	pat_oper.ftruncate	= pat_ftruncate;
+	trc_oper.getattr	= trc_getattr;
+	trc_oper.fgetattr	= trc_fgetattr;
+	trc_oper.access		= trc_access;
+	trc_oper.readlink	= trc_readlink;
+	trc_oper.opendir	= trc_opendir;
+	trc_oper.readdir	= trc_readdir;
+	trc_oper.releasedir	= trc_releasedir;
+	trc_oper.mknod		= trc_mknod;
+	trc_oper.mkdir		= trc_mkdir;
+	trc_oper.symlink	= trc_symlink;
+	trc_oper.unlink		= trc_unlink;
+	trc_oper.rmdir		= trc_rmdir;
+	trc_oper.rename		= trc_rename;
+	trc_oper.link		= trc_link;
+	trc_oper.chmod		= trc_chmod;
+	trc_oper.chown		= trc_chown;
+	trc_oper.truncate	= trc_truncate;
+	trc_oper.ftruncate	= trc_ftruncate;
 #ifdef HAVE_UTIMENSAT
-	pat_oper.utimens	= pat_utimens;
+	trc_oper.utimens	= trc_utimens;
 #endif
-	pat_oper.create		= pat_create;
-	pat_oper.open		= pat_open;
-	pat_oper.read		= pat_read;
-	pat_oper.read_buf	= pat_read_buf;
-	pat_oper.write		= pat_write;
-	pat_oper.write_buf	= pat_write_buf;
-	pat_oper.statfs		= pat_statfs;
-	pat_oper.flush		= pat_flush;
-	pat_oper.release	= pat_release;
-	pat_oper.fsync		= pat_fsync;
+	trc_oper.create		= trc_create;
+	trc_oper.open		= trc_open;
+	trc_oper.read		= trc_read;
+	trc_oper.read_buf	= trc_read_buf;
+	trc_oper.write		= trc_write;
+	trc_oper.write_buf	= trc_write_buf;
+	trc_oper.statfs		= trc_statfs;
+	trc_oper.flush		= trc_flush;
+	trc_oper.release	= trc_release;
+	trc_oper.fsync		= trc_fsync;
 #ifdef HAVE_POSIX_FALLOCATE
-	pat_oper.fallocate	= pat_fallocate;
+	trc_oper.fallocate	= trc_fallocate;
 #endif
 #ifdef HAVE_SETXATTR
-	pat_oper.setxattr	= pat_setxattr;
-	pat_oper.getxattr	= pat_getxattr;
-	pat_oper.listxattr	= pat_listxattr;
-	pat_oper.removexattr	= pat_removexattr;
+	trc_oper.setxattr	= trc_setxattr;
+	trc_oper.getxattr	= trc_getxattr;
+	trc_oper.listxattr	= trc_listxattr;
+	trc_oper.removexattr	= trc_removexattr;
 #endif
-	pat_oper.lock		= pat_lock;
-	pat_oper.flock		= pat_flock;
+	trc_oper.lock		= trc_lock;
+	trc_oper.flock		= trc_flock;
 
-	pat_oper.flag_nullpath_ok = 1;
+	trc_oper.flag_nullpath_ok = 1;
 #if HAVE_UTIMENSAT
-	pat_oper.flag_utime_omit_ok = 1;
+	trc_oper.flag_utime_omit_ok = 1;
 #endif
 }
 
@@ -567,5 +567,5 @@ int main(int argc, char *argv[])
 {
 	umask(0);
 	load_operations();
-	return fuse_main(argc, argv, &pat_oper, NULL);
+	return fuse_main(argc, argv, &trc_oper, NULL);
 }
