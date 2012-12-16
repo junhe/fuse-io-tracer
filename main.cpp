@@ -38,7 +38,7 @@
 
 using namespace std;
 
-int trcfd = 0; // fd for trace file. It has to be opened before everthing
+FILE* trcfp = NULL; // fp for trace file. It has to be opened before everthing
                // else starts, and be closed after everything.
 
 static int trc_getattr(const char *path, struct stat *stbuf)
@@ -336,6 +336,8 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
 
 	(void) path;
 	res = pread(fi->fh, buf, size, offset);
+    
+
 	if (res == -1)
 		res = -errno;
 
@@ -580,9 +582,9 @@ int main(int argc, char *argv[])
     gettimeofday(&create_time, NULL);
     trc_file_name << create_time.tv_sec << ".trace";   
 
-    trcfd = open(trc_file_name.str().c_str(), O_WRONLY|O_CREAT, 0666); 
-    if ( trcfd == -1 ) {
-        perror("open");
+    trcfp = fopen(trc_file_name.str().c_str(), "w"); 
+    if ( trcfp == NULL ) {
+        perror("fopen");
         return -1;
     }
     
@@ -590,5 +592,6 @@ int main(int argc, char *argv[])
 	load_operations();
 	//ret = fuse_main(argc, argv, &trc_oper, NULL);
     
+    fclose(trcfp);
     return ret;
 }
