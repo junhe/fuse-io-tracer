@@ -322,6 +322,13 @@ static int trc_open(const char *path, struct fuse_file_info *fi)
 	int fd;
 
 	fd = open(path, fi->flags);
+
+    // Trace
+    struct timeval op_time;
+    gettimeofday(&op_time, NULL);
+    fprintf(trcfp, "%s %s NA NA %ld.%ld\n",
+            path, __FUNCTION__, op_time.tv_sec, op_time.tv_usec);
+
 	if (fd == -1)
 		return -errno;
 
@@ -336,7 +343,12 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
 
 	(void) path;
 	res = pread(fi->fh, buf, size, offset);
-    
+   
+
+    struct timeval op_time;
+    gettimeofday(&op_time, NULL);
+    fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
+            path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
 
 	if (res == -1)
 		res = -errno;
@@ -350,6 +362,13 @@ static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
 	struct fuse_bufvec *src;
 
 	(void) path;
+
+    // Trace
+    struct timeval op_time;
+    gettimeofday(&op_time, NULL);
+    fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
+            path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
+
 
 	src = (struct fuse_bufvec *) malloc(sizeof(struct fuse_bufvec));
 	if (src == NULL)
@@ -370,6 +389,12 @@ static int trc_write(const char *path, const char *buf, size_t size,
 		     off_t offset, struct fuse_file_info *fi)
 {
 	int res;
+
+    // Trace
+    struct timeval op_time;
+    gettimeofday(&op_time, NULL);
+    fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
+            path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
 
 	(void) path;
 	res = pwrite(fi->fh, buf, size, offset);
@@ -409,7 +434,15 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
 	int res;
 
 	(void) path;
-	/* This is called from every close on an open file, so call the
+	
+    // Trace
+    struct timeval op_time;
+    gettimeofday(&op_time, NULL);
+    fprintf(trcfp, "%s %s NA NA %ld.%ld\n",
+            path, __FUNCTION__,  op_time.tv_sec, op_time.tv_usec);
+
+
+    /* This is called from every close on an open file, so call the
 	   close on the underlying filesystem.	But since flush may be
 	   called multiple times for an open file, this must not really
 	   close the file.  This is important if used on a network
@@ -595,3 +628,4 @@ int main(int argc, char *argv[])
     fclose(trcfp);
     return ret;
 }
+
