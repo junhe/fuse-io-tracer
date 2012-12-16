@@ -33,6 +33,14 @@
 #endif
 #include <sys/file.h> /* flock(2) */
 
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
+int trcfd = 0; // fd for trace file. It has to be opened before everthing
+               // else starts, and be closed after everything.
+
 static int trc_getattr(const char *path, struct stat *stbuf)
 {
 	int res;
@@ -565,7 +573,22 @@ void load_operations()
 
 int main(int argc, char *argv[])
 {
+    struct timeval create_time;
+    ostringstream trc_file_name;
+    int ret;
+    
+    gettimeofday(&create_time, NULL);
+    trc_file_name << create_time.tv_sec << ".trace";   
+
+    trcfd = open(trc_file_name.str().c_str(), O_WRONLY|O_CREAT, 0666); 
+    if ( trcfd == -1 ) {
+        perror("open");
+        return -1;
+    }
+    
 	umask(0);
 	load_operations();
-	return fuse_main(argc, argv, &trc_oper, NULL);
+	//ret = fuse_main(argc, argv, &trc_oper, NULL);
+    
+    return ret;
 }

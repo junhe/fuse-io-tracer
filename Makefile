@@ -6,7 +6,7 @@ CFLAGS=-Wall -D_FILE_OFFSET_BITS=64
 CC=g++
 INCLUDES=
 LIBS=`pkg-config fuse --cflags --libs`
-patfuse:${OBJS}
+fusetracer:${OBJS}
 	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} ${LIBS}
 
 clean:
