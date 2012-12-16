@@ -40,6 +40,7 @@ using namespace std;
 
 FILE* trcfp = NULL; // fp for trace file. It has to be opened before everthing
                // else starts, and be closed after everything.
+int opcnt = 0;
 
 static int trc_getattr(const char *path, struct stat *stbuf)
 {
@@ -328,6 +329,7 @@ static int trc_open(const char *path, struct fuse_file_info *fi)
     gettimeofday(&op_time, NULL);
     fprintf(trcfp, "%s %s NA NA %ld.%ld\n",
             path, __FUNCTION__, op_time.tv_sec, op_time.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	if (fd == -1)
 		return -errno;
@@ -349,6 +351,7 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
     gettimeofday(&op_time, NULL);
     fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
             path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	if (res == -1)
 		res = -errno;
@@ -368,6 +371,7 @@ static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
     gettimeofday(&op_time, NULL);
     fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
             path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 
 	src = (struct fuse_bufvec *) malloc(sizeof(struct fuse_bufvec));
@@ -395,6 +399,7 @@ static int trc_write(const char *path, const char *buf, size_t size,
     gettimeofday(&op_time, NULL);
     fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
             path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	(void) path;
 	res = pwrite(fi->fh, buf, size, offset);
@@ -410,6 +415,13 @@ static int trc_write_buf(const char *path, struct fuse_bufvec *buf,
 	struct fuse_bufvec dst = FUSE_BUFVEC_INIT(fuse_buf_size(buf));
 
 	(void) path;
+
+    // Trace
+    struct timeval op_time;
+    gettimeofday(&op_time, NULL);
+    fprintf(trcfp, "%s %s %lld NA %ld.%ld\n",
+            path, __FUNCTION__, offset,  op_time.tv_sec, op_time.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	dst.buf[0].flags = (fuse_buf_flags)(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK);
 	dst.buf[0].fd = fi->fh;
@@ -440,7 +452,7 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
     gettimeofday(&op_time, NULL);
     fprintf(trcfp, "%s %s NA NA %ld.%ld\n",
             path, __FUNCTION__,  op_time.tv_sec, op_time.tv_usec);
-
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
     /* This is called from every close on an open file, so call the
 	   close on the underlying filesystem.	But since flush may be
@@ -581,9 +593,9 @@ void load_operations()
 	trc_oper.create		= trc_create;
 	trc_oper.open		= trc_open;
 	trc_oper.read		= trc_read;
-	trc_oper.read_buf	= trc_read_buf;
+	//trc_oper.read_buf	= trc_read_buf;
 	trc_oper.write		= trc_write;
-	trc_oper.write_buf	= trc_write_buf;
+	//trc_oper.write_buf	= trc_write_buf;
 	trc_oper.statfs		= trc_statfs;
 	trc_oper.flush		= trc_flush;
 	trc_oper.release	= trc_release;
@@ -623,7 +635,7 @@ int main(int argc, char *argv[])
     
 	umask(0);
 	load_operations();
-	//ret = fuse_main(argc, argv, &trc_oper, NULL);
+	ret = fuse_main(argc, argv, &trc_oper, NULL);
     
     fclose(trcfp);
     return ret;
