@@ -18,3 +18,11 @@ is run, the trace file is opened at the same time.
 The trace file is located where the FUSE program is run.
 When the FUSE program is closed, the trace file is closed.
 The trace file is named the same as time-created.log.
+
+
+To run:
+./fusetracer /mnt/trace -d -o direct_io
+
+You have to use direct io, otherwise FUSE does its
+own caching and breaks the pattern with 4k aligned
+r/w.
