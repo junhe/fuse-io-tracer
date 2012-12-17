@@ -321,14 +321,17 @@ static int trc_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 static int trc_open(const char *path, struct fuse_file_info *fi)
 {
 	int fd;
+    struct timeval stime, etime; // start time, end time
 
+    gettimeofday(&stime, NULL);
 	fd = open(path, fi->flags);
+    gettimeofday(&etime, NULL);
 
     // Trace
-    struct timeval op_time;
-    gettimeofday(&op_time, NULL);
-    fprintf(trcfp, "%s %s NA NA %ld.%ld\n",
-            path, __FUNCTION__, op_time.tv_sec, op_time.tv_usec);
+    fprintf(trcfp, "%d %s %s NA NA %ld.%ld %ld.%ld\n",
+            fuse_get_context()->pid, path, __FUNCTION__, 
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
     if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	if (fd == -1)
@@ -344,13 +347,21 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
 	int res;
 
 	(void) path;
-	res = pread(fi->fh, buf, size, offset);
-   
+    struct timeval stime, etime; // start time, end time
 
-    struct timeval op_time;
-    gettimeofday(&op_time, NULL);
-    fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
-            path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
+    gettimeofday(&stime, NULL);
+    
+    // operation
+    res = pread(fi->fh, buf, size, offset);
+    
+    gettimeofday(&etime, NULL);
+
+    // Trace
+    fprintf(trcfp, "%d %s %s %lld %u NA %ld.%ld %ld.%ld\n",
+            fuse_get_context()->pid, path, __FUNCTION__, 
+            offset, size,
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
     if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	if (res == -1)
@@ -366,14 +377,11 @@ static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
 
 	(void) path;
 
-    // Trace
-    struct timeval op_time;
-    gettimeofday(&op_time, NULL);
-    fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
-            path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    struct timeval stime, etime; // start time, end time
 
-
+    gettimeofday(&stime, NULL);
+    
+    // operation
 	src = (struct fuse_bufvec *) malloc(sizeof(struct fuse_bufvec));
 	if (src == NULL)
 		return -ENOMEM;
@@ -385,6 +393,18 @@ static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
 	src->buf[0].pos = offset;
 
 	*bufp = src;
+    //////////////////////
+  
+
+    gettimeofday(&etime, NULL);
+
+    // Trace
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+            fuse_get_context()->pid, path, __FUNCTION__, 
+            offset, size,
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	return 0;
 }
@@ -394,16 +414,26 @@ static int trc_write(const char *path, const char *buf, size_t size,
 {
 	int res;
 
-    // Trace
-    struct timeval op_time;
-    gettimeofday(&op_time, NULL);
-    fprintf(trcfp, "%s %s %lld %u %ld.%ld\n",
-            path, __FUNCTION__, offset, size, op_time.tv_sec, op_time.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
-
 	(void) path;
+
+    struct timeval stime, etime; // start time, end time
+
+    gettimeofday(&stime, NULL);
+
 	res = pwrite(fi->fh, buf, size, offset);
-	if (res == -1)
+	
+    gettimeofday(&etime, NULL);
+
+    // Trace
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+            fuse_get_context()->pid, path, __FUNCTION__, 
+            offset, size,
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    
+
+    if (res == -1)
 		res = -errno;
 
 	return res;
@@ -416,18 +446,28 @@ static int trc_write_buf(const char *path, struct fuse_bufvec *buf,
 
 	(void) path;
 
-    // Trace
-    struct timeval op_time;
-    gettimeofday(&op_time, NULL);
-    fprintf(trcfp, "%s %s %lld NA %ld.%ld\n",
-            path, __FUNCTION__, offset,  op_time.tv_sec, op_time.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    struct timeval stime, etime; // start time, end time
+
+    gettimeofday(&stime, NULL);
+
 
 	dst.buf[0].flags = (fuse_buf_flags)(FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK);
 	dst.buf[0].fd = fi->fh;
 	dst.buf[0].pos = offset;
 
-	return fuse_buf_copy(&dst, buf, FUSE_BUF_SPLICE_NONBLOCK);
+	int ret = fuse_buf_copy(&dst, buf, FUSE_BUF_SPLICE_NONBLOCK);
+    
+    gettimeofday(&etime, NULL);
+
+    // Trace
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+            fuse_get_context()->pid, path, __FUNCTION__, 
+            offset, fuse_buf_size(buf),
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+
+    return ret;
 }
 
 static int trc_statfs(const char *path, struct statvfs *stbuf)
@@ -447,12 +487,9 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
 
 	(void) path;
 	
-    // Trace
-    struct timeval op_time;
-    gettimeofday(&op_time, NULL);
-    fprintf(trcfp, "%s %s NA NA %ld.%ld\n",
-            path, __FUNCTION__,  op_time.tv_sec, op_time.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    struct timeval stime, etime; // start time, end time
+
+    gettimeofday(&stime, NULL);
 
     /* This is called from every close on an open file, so call the
 	   close on the underlying filesystem.	But since flush may be
@@ -462,6 +499,15 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
 	res = close(dup(fi->fh));
 	if (res == -1)
 		return -errno;
+
+    gettimeofday(&etime, NULL);
+
+    // Trace
+    fprintf(trcfp, "%d %s %s NA NA %ld.%ld %ld.%ld\n",
+            fuse_get_context()->pid, path, __FUNCTION__, 
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
+    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	return 0;
 }
