@@ -357,7 +357,7 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u NA %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             offset, size,
             stime.tv_sec, stime.tv_usec,
