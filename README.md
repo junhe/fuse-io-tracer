@@ -1,17 +1,19 @@
 fuse-io-tracer
 ==============
 This FUSE-based tracer records IO operations 
-including read, write, open, close. The format 
-of the output is like:
+including read, write, open, close. This tracer is very nice
+because, no matter what I/O interfaces you use, it is able to 
+record the traces, as long as you do your operation in that
+mount point. The format of the output trace is like:
 
-filepath operation offset length time
+pid filepath operation offset length start-time end-time
 
 For example,
-/tmp/myfile read 1024 3 23472342.2342842
+8848 /tmp/myfile read 1024 3 23472342.2342842 332324243.23223
 
 or 
 
-/tmp/myfile open NA NA 28423477752.3234243
+8848 /tmp/myfile open NA NA 28423477752.3234243 23242444222324.3232
 
 The time is got by gettimeofday(). When the FUSE program
 is run, the trace file is opened at the same time.
