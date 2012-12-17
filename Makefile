@@ -15,3 +15,6 @@ clean:
 
 .cpp.o:
 	${CC} ${CFLAGS} ${INCLUDES} -c $<
+
+run:
+	./fusetracer /mnt/trace -d -o direct_io
