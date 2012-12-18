@@ -21,9 +21,15 @@ The trace file is located where the FUSE program is run.
 When the FUSE program is closed, the trace file is closed.
 The trace file is named the same as time-created.log.
 
+To compile:
+First make sure you have FUSE 2.9.2 (or higher version) installed,
+then:
+$make
+
+You will see an executable called fusetracer in the folder.
 
 To run:
-./fusetracer /mnt/trace -d -o direct_io
+$./fusetracer /mnt/trace -d -o direct_io
 
 You have to use direct io, otherwise FUSE does its
 own caching and breaks the pattern with 4k aligned
