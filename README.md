@@ -28,3 +28,10 @@ To run:
 You have to use direct io, otherwise FUSE does its
 own caching and breaks the pattern with 4k aligned
 r/w.
+
+To use:
+./myapplication /mnt/trace/home/junhe/bigfile
+
+If your application accesses multiple files and you only want
+the trace of a subset of the files, you can do this:
+./myapplication /mnt/trace/home/junhe/file-to-be-traced /home/junhe/file-no-to-be-traced
