@@ -41,7 +41,7 @@ class Replayer{
         int _fd;
 
         void readTrace(const char *fpath);
-        void play();
+        void play(const char *outpath);
 };
 
 void Replayer::readTrace(const char *fpath)
@@ -59,15 +59,24 @@ void Replayer::readTrace(const char *fpath)
 
         char path[256];
         char operation[256];
-        fscanf(fp, "%u", &entry._pid);
-        fscanf(fp, "%s", path);
+        int ret = 0;
+        ret += fscanf(fp, "%u", &entry._pid);
+        ret += fscanf(fp, "%s", path);
+        
         entry._path.assign(path);
-        fscanf(fp, "%s", operation);
+        
+        ret += fscanf(fp, "%s", operation);
+        
         entry._operation.assign(operation);
-        fscanf(fp, "%lld", &entry._offset);
-        fscanf(fp, "%d", &entry._length);
-        fscanf(fp, "%lf", &entry._start_time);
-        fscanf(fp, "%lf", &entry._end_time);
+        ret += fscanf(fp, "%lld", &entry._offset);
+        ret += fscanf(fp, "%d", &entry._length);
+        ret += fscanf(fp, "%lf", &entry._start_time);
+        ret += fscanf(fp, "%lf", &entry._end_time);
+
+        if ( ret != 7 ) {
+            break;
+        }
+
         entry.show();
         _trace.push_back( entry );
     }
@@ -75,14 +84,15 @@ void Replayer::readTrace(const char *fpath)
     fclose(fp);
 }
 
-void Replayer::play()
+void Replayer::play(const char *outpath)
 {
     assert( !_trace.empty() );
 
     vector<Entry>::const_iterator cit;
 
-    _fd = open( _trace.front()._path.c_str(), O_RDONLY );
-    
+    _fd = open( outpath, O_RDONLY );
+    assert( _fd != 0 );
+
     for ( cit = _trace.begin();
           cit != _trace.end();
           cit++ )
@@ -95,6 +105,8 @@ void Replayer::play()
             vector<Entry>::const_iterator precit;
             precit = cit;
             precit--;
+            int sleeptime = (cit->_start_time - precit->_end_time) * 1000000;
+            cout << "sleeptime: " << sleeptime << endl;
             usleep( (cit->_start_time - precit->_end_time) * 1000000 );
         }
 
@@ -110,8 +122,15 @@ void Replayer::play()
 
 int main(int argc, char **argv)
 {
+    if ( argc != 3 ) {
+        printf("Usage: %s trace-file output-file\n", argv[0]);
+        return 1;
+    }
+
     Replayer replayer;
     replayer.readTrace(argv[1]);
+    replayer.play(argv[2]);
+
     return 0;    
 }
 
