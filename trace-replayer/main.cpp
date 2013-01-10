@@ -6,7 +6,7 @@
 #include <vector>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <sys/time.h>
 
 
 using namespace std;
@@ -42,20 +42,19 @@ class Replayer{
 
         void readTrace(const char *fpath);
         void play(const char *outpath);
+        double playTime( const char *tracepath,
+                           const char *outpath);
 };
 
 void Replayer::readTrace(const char *fpath)
 {
     FILE *fp;
-    int cnt = 0;
 
     fp = fopen(fpath, "r");
     assert(fp != NULL);
 
     while ( !feof(fp) ) {
         Entry entry;
-
-        cout << "cnt:" << cnt++ << endl;
 
         char path[256];
         char operation[256];
@@ -90,7 +89,7 @@ void Replayer::play(const char *outpath)
     vector<Entry>::const_iterator cit;
 
     _fd = open( outpath, O_RDONLY );
-    assert( _fd != 0 );
+    assert( _fd != -1 );
 
     for ( cit = _trace.begin();
           cit != _trace.end();
@@ -105,11 +104,11 @@ void Replayer::play(const char *outpath)
             precit = cit;
             precit--;
             int sleeptime = (cit->_start_time - precit->_end_time) * 1000000;
-            cout << "sleeptime: " << sleeptime << endl;
-            usleep( (cit->_start_time - precit->_end_time) * 1000000 );
+            //cout << "sleeptime: " << sleeptime << endl;
+            usleep( sleeptime );
         }
 
-        cit->show();
+        //cit->show();
         pread(_fd, data, cit->_length, cit->_offset);
         
 
@@ -120,6 +119,26 @@ void Replayer::play(const char *outpath)
     close( _fd );
 }
 
+
+double Replayer::playTime( const char *tracepath,
+                           const char *outpath)
+{
+    struct timeval start, end, result;  
+
+    // build trace
+    readTrace(tracepath);
+
+    // play trace and time it
+    gettimeofday(&start, NULL);
+    play(outpath);
+    gettimeofday(&end, NULL);
+
+    timersub( &end, &start, &result );
+    printf("Time: %ld.%ld\n", result.tv_sec, result.tv_usec);
+
+    return result.tv_sec + result.tv_usec/1000000;
+}
+
 int main(int argc, char **argv)
 {
     if ( argc != 3 ) {
@@ -128,8 +147,7 @@ int main(int argc, char **argv)
     }
 
     Replayer replayer;
-    replayer.readTrace(argv[1]);
-    replayer.play(argv[2]);
+    replayer.playTime(argv[1], argv[2]);
 
     return 0;    
 }
