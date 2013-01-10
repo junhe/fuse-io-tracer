@@ -21,10 +21,10 @@ class Entry {
         double _start_time;
         double _end_time;
         
-        void show();
+        void show() const;
 };
 
-void Entry::show()
+void Entry::show() const
 {
     cout << _pid << " "
          << _path << " "
@@ -77,7 +77,6 @@ void Replayer::readTrace(const char *fpath)
             break;
         }
 
-        entry.show();
         _trace.push_back( entry );
     }
      
@@ -110,6 +109,7 @@ void Replayer::play(const char *outpath)
             usleep( (cit->_start_time - precit->_end_time) * 1000000 );
         }
 
+        cit->show();
         pread(_fd, data, cit->_length, cit->_offset);
         
 
