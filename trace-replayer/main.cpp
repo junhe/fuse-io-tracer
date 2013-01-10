@@ -90,7 +90,16 @@ void Replayer::play()
         void *data = malloc(cit->_length);
         assert( data != NULL );
 
-        ssize_t ret = pread(_fd, data, cit->_length, cit->_offset);
+        if ( cit != _trace.begin() ) {
+            // sleep to simulate computation
+            vector<Entry>::const_iterator precit;
+            precit = cit;
+            precit--;
+            usleep( (cit->_start_time - precit->_end_time) * 1000000 );
+        }
+
+        pread(_fd, data, cit->_length, cit->_offset);
+        
 
         free(data);
     }
