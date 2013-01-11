@@ -357,11 +357,11 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s %lld %u %f %f\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             offset, size,
-            stime.tv_sec, stime.tv_usec,
-            etime.tv_sec, etime.tv_usec);
+            stime.tv_sec + stime.tv_usec/1000000.0,
+            etime.tv_sec + etime.tv_usec/1000000.0);
     if ( opcnt++ % 100 == 0 ) fflush(trcfp);
 
 	if (res == -1)

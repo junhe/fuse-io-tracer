@@ -82,6 +82,8 @@ void Replayer::readTrace(const char *fpath)
     fclose(fp);
 }
 
+
+// TODO: the trace should have only one filepath column
 void Replayer::play(const char *outpath)
 {
     assert( !_trace.empty() );
@@ -104,8 +106,11 @@ void Replayer::play(const char *outpath)
             precit = cit;
             precit--;
             int sleeptime = (cit->_start_time - precit->_end_time) * 1000000;
-            //cout << "sleeptime: " << sleeptime << endl;
-            usleep( sleeptime );
+            //usleep( sleeptime );
+            if ( sleeptime < 0 ) {
+                cout << "sleeptime: " << sleeptime/1000000.0 << endl;
+                cit->show();
+            }
         }
 
         //cit->show();
