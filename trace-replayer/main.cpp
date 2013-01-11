@@ -69,13 +69,42 @@ void Replayer::readTrace(const char *fpath)
         entry._operation.assign(operation);
         ret += fscanf(fp, "%lld", &entry._offset);
         ret += fscanf(fp, "%d", &entry._length);
-        ret += fscanf(fp, "%lf", &entry._start_time);
-        ret += fscanf(fp, "%lf", &entry._end_time);
+        
+        // start time
+        char tmpchar[64];
+        size_t pos;
+        string tmpstr;
+       
+        // This part is only good for old FUSE tracer
+        // where the time printed out by %lld.%lld
+        ret += fscanf(fp, "%s", tmpchar);
+        tmpstr.assign(tmpchar);
+        
+        pos = tmpstr.find(".");
+        assert(pos != string::npos);
+       
+        while ( tmpstr.size() - pos < 7 ) {
+            tmpstr.insert(pos+1, "0");
+        }
+        entry._start_time = atof(tmpstr.c_str());
+
+        ret += fscanf(fp, "%s", tmpchar);
+        tmpstr.assign(tmpchar);
+        
+        pos = tmpstr.find(".");
+        assert(pos != string::npos);
+        
+        while ( tmpstr.size() - pos < 7 ) {
+            tmpstr.insert(pos+1, "0");
+        }
+        entry._end_time = atof(tmpstr.c_str());
+
 
         if ( ret != 7 ) {
             break;
         }
-
+        
+        entry.show();
         _trace.push_back( entry );
     }
      
@@ -152,8 +181,8 @@ int main(int argc, char **argv)
     }
 
     Replayer replayer;
-    replayer.playTime(argv[1], argv[2]);
-
+    //replayer.playTime(argv[1], argv[2]);
+    replayer.readTrace(argv[1]);
     return 0;    
 }
 
