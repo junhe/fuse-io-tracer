@@ -104,7 +104,6 @@ void Replayer::readTrace(const char *fpath)
             break;
         }
         
-        entry.show();
         _trace.push_back( entry );
     }
      
@@ -118,6 +117,7 @@ void Replayer::play(const char *outpath)
     assert( !_trace.empty() );
 
     vector<Entry>::const_iterator cit;
+    int total = 0;
 
     _fd = open( outpath, O_RDONLY );
     assert( _fd != -1 );
@@ -135,21 +135,16 @@ void Replayer::play(const char *outpath)
             precit = cit;
             precit--;
             int sleeptime = (cit->_start_time - precit->_end_time) * 1000000;
-            //usleep( sleeptime );
-            if ( sleeptime < 0 ) {
-                cout << "sleeptime: " << sleeptime/1000000.0 << endl;
-                cit->show();
-            }
+            assert( sleeptime >= 0 );
+            usleep( sleeptime );
         }
 
-        //cit->show();
-        pread(_fd, data, cit->_length, cit->_offset);
-        
+        total += pread(_fd, data, cit->_length, cit->_offset);
 
         free(data);
     }
 
-
+    cout << "total bytes read: " << total << "(" << total/1024 << "KB)" << endl;
     close( _fd );
 }
 
@@ -168,7 +163,7 @@ double Replayer::playTime( const char *tracepath,
     gettimeofday(&end, NULL);
 
     timersub( &end, &start, &result );
-    printf("Time: %ld.%ld\n", result.tv_sec, result.tv_usec);
+    printf("Time: %ld.%.6ld\n", result.tv_sec, result.tv_usec);
 
     return result.tv_sec + result.tv_usec/1000000;
 }
@@ -181,8 +176,7 @@ int main(int argc, char **argv)
     }
 
     Replayer replayer;
-    //replayer.playTime(argv[1], argv[2]);
-    replayer.readTrace(argv[1]);
+    replayer.playTime(argv[1], argv[2]);
     return 0;    
 }
 
