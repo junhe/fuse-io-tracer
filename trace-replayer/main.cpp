@@ -40,6 +40,11 @@ class Replayer{
         vector<Entry> _trace;
         int _fd;
 
+        // initial these before playing
+        int _sleeptime;
+        int _customized_sleeptime; // 0 or 1
+        int _do_pread; // 0 or 1
+
         void readTrace(const char *fpath);
         void play(const char *outpath);
         double playTime( const char *tracepath,
@@ -136,15 +141,21 @@ void Replayer::play(const char *outpath)
             precit--;
             int sleeptime = (cit->_start_time - precit->_end_time) * 1000000;
             assert( sleeptime >= 0 );
-            usleep( sleeptime );
+            if ( _customized_sleeptime == 1 ) {
+                usleep( _sleeptime );
+            } else {
+                usleep( sleeptime );
+            }
         }
 
-        total += pread(_fd, data, cit->_length, cit->_offset);
+        if ( _do_pread == 1 ) {
+            total += pread(_fd, data, cit->_length, cit->_offset);
+        }
 
         free(data);
     }
 
-    cout << "total bytes read: " << total << "(" << total/1024 << "KB)" << endl;
+    cout << total << " " ;// "(" << total/1024 << "KB)" << endl;
     close( _fd );
 }
 
@@ -163,19 +174,30 @@ double Replayer::playTime( const char *tracepath,
     gettimeofday(&end, NULL);
 
     timersub( &end, &start, &result );
-    printf("Time: %ld.%.6ld\n", result.tv_sec, result.tv_usec);
+    printf("%ld.%.6ld\n", result.tv_sec, result.tv_usec);
 
     return result.tv_sec + result.tv_usec/1000000;
 }
 
 int main(int argc, char **argv)
 {
-    if ( argc != 3 ) {
-        printf("Usage: %s trace-file output-file\n", argv[0]);
+    if ( argc != 6 ) {
+        printf("Usage: %s trace-file output-file sleeptime customized-sleeptime do-pread\n", argv[0]);
         return 1;
     }
 
     Replayer replayer;
+
+    // init
+    replayer._sleeptime = atoi(argv[3]);
+    replayer._customized_sleeptime = atoi(argv[4]);
+    replayer._do_pread = atoi(argv[5]);
+
+    cout << replayer._sleeptime << " ";
+    cout << replayer._customized_sleeptime << " ";
+    cout << replayer._do_pread << " ";
+
+
     replayer.playTime(argv[1], argv[2]);
     return 0;    
 }
