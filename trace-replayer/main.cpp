@@ -44,18 +44,48 @@ class Replayer{
         int _sleeptime;
         int _customized_sleeptime; // 0 or 1
         int _do_pread; // 0 or 1
+        string _trace_path;
+        string _data_path;
 
-        void readTrace(const char *fpath);
-        void play(const char *outpath);
-        double playTime( const char *tracepath,
-                           const char *outpath);
+        void readTrace();
+        void play();
+        double playTime();
+        void prePlay();
+        void postPlay();
+        void prefetch();
 };
 
-void Replayer::readTrace(const char *fpath)
+void Replayer::prefetch()
+{
+    assert( !_trace.empty() );
+
+    vector<Entry>::const_iterator cit;
+
+    for ( cit = _trace.begin();
+          cit != _trace.end();
+          cit++ )
+    {
+        posix_fadvise( _fd, cit->_offset, cit->_length, POSIX_FADV_WILLNEED);
+    }
+}
+
+void Replayer::prePlay()
+{
+     _fd = open( _data_path.c_str(), O_RDONLY );
+    assert( _fd != -1 );
+}
+
+void Replayer::postPlay()
+{
+    close(_fd);
+}
+
+void Replayer::readTrace()
 {
     FILE *fp;
+    
 
-    fp = fopen(fpath, "r");
+    fp = fopen(_trace_path.c_str(), "r");
     assert(fp != NULL);
 
     while ( !feof(fp) ) {
@@ -111,21 +141,18 @@ void Replayer::readTrace(const char *fpath)
         
         _trace.push_back( entry );
     }
-     
     fclose(fp);
 }
 
 
 // TODO: the trace should have only one filepath column
-void Replayer::play(const char *outpath)
+void Replayer::play()
 {
     assert( !_trace.empty() );
 
     vector<Entry>::const_iterator cit;
     int total = 0;
 
-    _fd = open( outpath, O_RDONLY );
-    assert( _fd != -1 );
 
     for ( cit = _trace.begin();
           cit != _trace.end();
@@ -156,22 +183,26 @@ void Replayer::play(const char *outpath)
     }
 
     cout << total << " " ;// "(" << total/1024 << "KB)" << endl;
-    close( _fd );
 }
 
 
-double Replayer::playTime( const char *tracepath,
-                           const char *outpath)
+double Replayer::playTime()
 {
     struct timeval start, end, result;  
 
     // build trace
-    readTrace(tracepath);
+    readTrace();
+
+    prePlay();
+
+    prefetch();
 
     // play trace and time it
     gettimeofday(&start, NULL);
-    play(outpath);
+    play();
     gettimeofday(&end, NULL);
+
+    postPlay();
 
     timersub( &end, &start, &result );
     printf("%ld.%.6ld\n", result.tv_sec, result.tv_usec);
@@ -189,16 +220,21 @@ int main(int argc, char **argv)
     Replayer replayer;
 
     // init
+    replayer._trace_path =  argv[1];
+    replayer._data_path = argv[2];
     replayer._sleeptime = atoi(argv[3]);
     replayer._customized_sleeptime = atoi(argv[4]);
     replayer._do_pread = atoi(argv[5]);
 
+
+    cout << replayer._trace_path << " ";
+    cout << replayer._data_path << " ";
     cout << replayer._sleeptime << " ";
     cout << replayer._customized_sleeptime << " ";
     cout << replayer._do_pread << " ";
 
 
-    replayer.playTime(argv[1], argv[2]);
+    replayer.playTime();
     return 0;    
 }
 
