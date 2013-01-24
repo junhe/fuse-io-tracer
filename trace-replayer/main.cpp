@@ -110,11 +110,13 @@ void Replayer::readTrace()
         ret += fscanf(fp, "%lld", &entry._offset);
         ret += fscanf(fp, "%d", &entry._length);
         
+      
+#ifdef WRONGTIME_IN_TRACE
         // start time
         char tmpchar[64];
         size_t pos;
         string tmpstr;
-       
+
         // This part is only good for old FUSE tracer
         // where the time printed out by %lld.%lld
         ret += fscanf(fp, "%s", tmpchar);
@@ -138,12 +140,17 @@ void Replayer::readTrace()
             tmpstr.insert(pos+1, "0");
         }
         entry._end_time = atof(tmpstr.c_str());
-
+#else
+        ret += fscanf(fp, "%lf", &entry._start_time);
+        ret += fscanf(fp, "%lf", &entry._end_time);
+#endif
 
         if ( ret != 7 ) {
             break;
         }
         
+        //entry.show();
+
         _trace.push_back( entry );
     }
     fclose(fp);
