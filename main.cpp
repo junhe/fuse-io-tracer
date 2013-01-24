@@ -328,7 +328,7 @@ static int trc_open(const char *path, struct fuse_file_info *fi)
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s NA NA %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
@@ -400,7 +400,7 @@ static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             offset, size,
             stime.tv_sec, stime.tv_usec,
@@ -427,7 +427,7 @@ static int trc_write(const char *path, const char *buf, size_t size,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             offset, size,
             stime.tv_sec, stime.tv_usec,
@@ -463,7 +463,7 @@ static int trc_write_buf(const char *path, struct fuse_bufvec *buf,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             offset, fuse_buf_size(buf),
             stime.tv_sec, stime.tv_usec,
@@ -507,7 +507,7 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s NA NA %ld.%ld %ld.%ld\n",
+    fprintf(trcfp, "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
