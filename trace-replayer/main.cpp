@@ -44,8 +44,11 @@ class Replayer{
         int _sleeptime;
         int _customized_sleeptime; // 0 or 1
         int _do_pread; // 0 or 1
+        int _do_prefetch; // 0 or 1
         string _trace_path;
         string _data_path;
+        int _period;
+        int _do_period;
 
         void readTrace();
         void play();
@@ -67,6 +70,8 @@ void Replayer::prefetch()
     {
         posix_fadvise( _fd, cit->_offset, cit->_length, POSIX_FADV_WILLNEED);
     }
+    
+    sleep(20);
 }
 
 void Replayer::prePlay()
@@ -152,11 +157,11 @@ void Replayer::play()
 
     vector<Entry>::const_iterator cit;
     int total = 0;
-
+    int cnt = 0;
 
     for ( cit = _trace.begin();
           cit != _trace.end();
-          cit++ )
+          cit++, cnt++ )
     {
         void *data = malloc(cit->_length);
         assert( data != NULL );
@@ -172,6 +177,28 @@ void Replayer::play()
                 usleep( _sleeptime );
             } else {
                 usleep( sleeptime );
+            }
+        }
+
+        if ( _do_period == 1 && cnt % _period == 0 ) {
+            vector<Entry>::const_iterator pcit;
+            vector<Entry>::const_iterator start;
+            vector<Entry>::const_iterator end;
+
+            start = _trace.begin() + cnt + _period/2;
+            end = _trace.begin() + cnt + _period/2 + _period;
+            for ( pcit = start ;
+                  pcit != end &&  _trace.end() - pcit > 0  ;
+                  pcit++ ) 
+            {
+                off_t startblock, endblock;
+                off_t blocksize = 8129;
+                startblock = pcit->_offset / blocksize;
+                endblock = (pcit->_offset + pcit->_length) / blocksize;
+                int i;
+                for ( i = startblock ; i <= endblock ; i++ ) {
+                    posix_fadvise( _fd, i*blocksize, blocksize, POSIX_FADV_WILLNEED);
+                }
             }
         }
 
@@ -195,25 +222,39 @@ double Replayer::playTime()
 
     prePlay();
 
-    prefetch();
+    if ( _do_prefetch == 1 ) {
+        prefetch();
+    }
+
+#if 0
+    // play trace and time it
+    gettimeofday(&start, NULL);
+    play();
+    gettimeofday(&end, NULL);
+
+    timersub( &end, &start, &result );
+    printf("%ld.%.6ld ", result.tv_sec, result.tv_usec);
+#endif
 
     // play trace and time it
     gettimeofday(&start, NULL);
     play();
     gettimeofday(&end, NULL);
 
-    postPlay();
-
     timersub( &end, &start, &result );
     printf("%ld.%.6ld\n", result.tv_sec, result.tv_usec);
+
+
+    postPlay();
 
     return result.tv_sec + result.tv_usec/1000000;
 }
 
 int main(int argc, char **argv)
 {
-    if ( argc != 6 ) {
-        printf("Usage: %s trace-file output-file sleeptime customized-sleeptime do-pread\n", argv[0]);
+    if ( argc != 9 ) {
+        printf("Usage: %s trace-file output-file sleeptime customized-sleeptime do-pread do-whole-prefetch\
+                do-period-prefetch period\n", argv[0]);
         return 1;
     }
 
@@ -225,7 +266,9 @@ int main(int argc, char **argv)
     replayer._sleeptime = atoi(argv[3]);
     replayer._customized_sleeptime = atoi(argv[4]);
     replayer._do_pread = atoi(argv[5]);
-
+    replayer._do_prefetch = atoi(argv[6]);
+    replayer._do_period = atoi(argv[7]);
+    replayer._period = atoi(argv[8]);
 
     cout << replayer._trace_path << " ";
     cout << replayer._data_path << " ";
