@@ -35,6 +35,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -675,7 +676,12 @@ int main(int argc, char *argv[])
     int ret;
     
     gettimeofday(&create_time, NULL);
-    trc_file_name << create_time.tv_sec << ".trace";   
+    trc_file_name << setfill('0');
+    trc_file_name << create_time.tv_sec 
+                  << "."
+                  << setw(6)
+                  << create_time.tv_usec << ".trace";   
+
 
     trcfp = fopen(trc_file_name.str().c_str(), "w"); 
     if ( trcfp == NULL ) {
