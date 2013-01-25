@@ -333,7 +333,7 @@ static int trc_open(const char *path, struct fuse_file_info *fi)
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    if ( opcnt++ % 100 == 0 ) sync();
 
 	if (fd == -1)
 		return -errno;
@@ -363,7 +363,7 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
             offset, size,
             stime.tv_sec + stime.tv_usec/1000000.0,
             etime.tv_sec + etime.tv_usec/1000000.0);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    if ( opcnt++ % 100 == 0 ) sync();
 
 	if (res == -1)
 		res = -errno;
@@ -406,7 +406,7 @@ static int trc_read_buf(const char *path, struct fuse_bufvec **bufp,
             offset, size,
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    if ( opcnt++ % 100 == 0 ) sync();
 
 	return 0;
 }
@@ -433,7 +433,7 @@ static int trc_write(const char *path, const char *buf, size_t size,
             offset, size,
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    if ( opcnt++ % 100 == 0 ) sync();
     
 
     if (res == -1)
@@ -469,7 +469,7 @@ static int trc_write_buf(const char *path, struct fuse_bufvec *buf,
             offset, fuse_buf_size(buf),
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    if ( opcnt++ % 100 == 0 ) sync();
 
     return ret;
 }
@@ -512,7 +512,7 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) fflush(trcfp);
+    if ( opcnt++ % 100 == 0 ) sync();
 
 	return 0;
 }
@@ -661,7 +661,7 @@ void load_operations()
 	trc_oper.removexattr	= trc_removexattr;
 #endif
 	trc_oper.lock		= trc_lock;
-	trc_oper.flock		= trc_flock;
+	//trc_oper.flock		= trc_flock;
 
 	trc_oper.flag_nullpath_ok = 1;
 #if HAVE_UTIMENSAT
