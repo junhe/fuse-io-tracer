@@ -33,14 +33,18 @@
 #endif
 #include <sys/file.h> /* flock(2) */
 
+#include <assert.h>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
 
 using namespace std;
 
-FILE* trcfp = NULL; // fp for trace file. It has to be opened before everthing
+//FILE* trcfp = NULL; // fp for trace file. It has to be opened before everthing
                // else starts, and be closed after everything.
+int trcfd;
+#define TRACELINEBUFSIZE 512
+#define SYNCPERIOD 1000
 int opcnt = 0;
 
 static int trc_getattr(const char *path, struct stat *stbuf)
@@ -329,11 +333,14 @@ static int trc_open(const char *path, struct fuse_file_info *fi)
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
+    char trcbuf[TRACELINEBUFSIZE];
+    snprintf(trcbuf, TRACELINEBUFSIZE, 
+            "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) sync();
+    write(trcfd, trcbuf, strlen(trcbuf));
+    if ( opcnt++ % SYNCPERIOD == 0 ) fsync(trcfd);
 
 	if (fd == -1)
 		return -errno;
@@ -358,14 +365,16 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u %f %f\n",
+    char trcbuf[TRACELINEBUFSIZE];
+    snprintf(trcbuf, TRACELINEBUFSIZE, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
-            offset, size,
-            stime.tv_sec + stime.tv_usec/1000000.0,
-            etime.tv_sec + etime.tv_usec/1000000.0);
-    if ( opcnt++ % 100 == 0 ) sync();
-
-	if (res == -1)
+            (long long int)offset, (unsigned int)size,
+            stime.tv_sec, stime.tv_usec,
+            etime.tv_sec, etime.tv_usec);
+    write(trcfd, trcbuf, strlen(trcbuf));
+    if ( opcnt++ % SYNCPERIOD == 0 ) fsync(trcfd);
+	
+    if (res == -1)
 		res = -errno;
 
 	return res;
@@ -428,13 +437,14 @@ static int trc_write(const char *path, const char *buf, size_t size,
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
+    char trcbuf[TRACELINEBUFSIZE];
+    snprintf(trcbuf, TRACELINEBUFSIZE, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
-            offset, size,
+            (long long int)offset, (unsigned int)size,
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) sync();
-    
+    write(trcfd, trcbuf, strlen(trcbuf));
+    if ( opcnt++ % SYNCPERIOD == 0 ) fsync(trcfd);
 
     if (res == -1)
 		res = -errno;
@@ -508,11 +518,14 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
     gettimeofday(&etime, NULL);
 
     // Trace
-    fprintf(trcfp, "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
+    char trcbuf[TRACELINEBUFSIZE];
+    snprintf(trcbuf, TRACELINEBUFSIZE, 
+            "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
-    if ( opcnt++ % 100 == 0 ) sync();
+    write(trcfd, trcbuf, strlen(trcbuf));
+    if ( opcnt++ % SYNCPERIOD == 0 ) fsync(trcfd);
 
 	return 0;
 }
@@ -604,7 +617,7 @@ static int trc_lock(const char *path, struct fuse_file_info *fi, int cmd,
 //			   sizeof(fi->lock_owner));
     return EXIT_FAILURE;
 }
-
+#if 0
 static int trc_flock(const char *path, struct fuse_file_info *fi, int op)
 {
 	int res;
@@ -616,6 +629,7 @@ static int trc_flock(const char *path, struct fuse_file_info *fi, int op)
 
 	return 0;
 }
+#endif
 
 static struct fuse_operations trc_oper;
 void load_operations()
@@ -683,17 +697,17 @@ int main(int argc, char *argv[])
                   << create_time.tv_usec << ".trace";   
 
 
-    trcfp = fopen(trc_file_name.str().c_str(), "w"); 
-    if ( trcfp == NULL ) {
+    trcfd = open(trc_file_name.str().c_str(), O_CREAT|O_WRONLY|O_TRUNC); 
+    if ( trcfd == -1 ) {
         perror("fopen");
-        return -1;
     }
+    assert( trcfd != -1 ); // cannot do a thing if cannot open the file
     
 	umask(0);
 	load_operations();
 	ret = fuse_main(argc, argv, &trc_oper, NULL);
     
-    fclose(trcfp);
+    close(trcfd);
     return ret;
 }
 
