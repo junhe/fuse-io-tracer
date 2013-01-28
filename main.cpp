@@ -699,7 +699,9 @@ int main(int argc, char *argv[])
     ostringstream trc_file_name;
     int ret;
     
+    gethostname(myhostname, HOSTNAMESIZE);
     gettimeofday(&create_time, NULL);
+    trc_file_name << myhostname;
     trc_file_name << setfill('0');
     trc_file_name << create_time.tv_sec 
                   << "."
@@ -713,7 +715,6 @@ int main(int argc, char *argv[])
     }
     assert( trcfd != -1 ); // cannot do a thing if cannot open the file
     
-    gethostname(myhostname, HOSTNAMESIZE);
 
 	umask(0);
 	load_operations();
