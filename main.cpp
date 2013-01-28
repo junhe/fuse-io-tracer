@@ -701,7 +701,7 @@ int main(int argc, char *argv[])
     
     gethostname(myhostname, HOSTNAMESIZE);
     gettimeofday(&create_time, NULL);
-    trc_file_name << myhostname;
+    trc_file_name << myhostname << ".";
     trc_file_name << setfill('0');
     trc_file_name << create_time.tv_sec 
                   << "."
