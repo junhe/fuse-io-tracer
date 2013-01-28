@@ -45,7 +45,11 @@ using namespace std;
 int trcfd;
 #define TRACELINEBUFSIZE 512
 #define SYNCPERIOD 1000
+#define HOSTNAMESIZE 512
+char myhostname[HOSTNAMESIZE];
 int opcnt = 0;
+
+
 
 static int trc_getattr(const char *path, struct stat *stbuf)
 {
@@ -335,7 +339,8 @@ static int trc_open(const char *path, struct fuse_file_info *fi)
     // Trace
     char trcbuf[TRACELINEBUFSIZE];
     snprintf(trcbuf, TRACELINEBUFSIZE, 
-            "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
+            "%s %d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
+            myhostname,
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
@@ -366,7 +371,9 @@ static int trc_read(const char *path, char *buf, size_t size, off_t offset,
 
     // Trace
     char trcbuf[TRACELINEBUFSIZE];
-    snprintf(trcbuf, TRACELINEBUFSIZE, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
+    snprintf(trcbuf, TRACELINEBUFSIZE, 
+            "%s %d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
+            myhostname,
             fuse_get_context()->pid, path, __FUNCTION__, 
             (long long int)offset, (unsigned int)size,
             stime.tv_sec, stime.tv_usec,
@@ -438,7 +445,9 @@ static int trc_write(const char *path, const char *buf, size_t size,
 
     // Trace
     char trcbuf[TRACELINEBUFSIZE];
-    snprintf(trcbuf, TRACELINEBUFSIZE, "%d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
+    snprintf(trcbuf, TRACELINEBUFSIZE, 
+            "%s %d %s %s %lld %u %ld.%.6ld %ld.%.6ld\n",
+            myhostname,
             fuse_get_context()->pid, path, __FUNCTION__, 
             (long long int)offset, (unsigned int)size,
             stime.tv_sec, stime.tv_usec,
@@ -520,7 +529,8 @@ static int trc_flush(const char *path, struct fuse_file_info *fi)
     // Trace
     char trcbuf[TRACELINEBUFSIZE];
     snprintf(trcbuf, TRACELINEBUFSIZE, 
-            "%d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
+            "%s %d %s %s NA NA %ld.%.6ld %ld.%.6ld\n",
+            myhostname, 
             fuse_get_context()->pid, path, __FUNCTION__, 
             stime.tv_sec, stime.tv_usec,
             etime.tv_sec, etime.tv_usec);
@@ -703,6 +713,8 @@ int main(int argc, char *argv[])
     }
     assert( trcfd != -1 ); // cannot do a thing if cannot open the file
     
+    gethostname(myhostname, HOSTNAMESIZE);
+
 	umask(0);
 	load_operations();
 	ret = fuse_main(argc, argv, &trc_oper, NULL);
