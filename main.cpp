@@ -697,7 +697,7 @@ int main(int argc, char *argv[])
                   << create_time.tv_usec << ".trace";   
 
 
-    trcfd = open(trc_file_name.str().c_str(), O_CREAT|O_WRONLY|O_TRUNC); 
+    trcfd = open(trc_file_name.str().c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0666 ); 
     if ( trcfd == -1 ) {
         perror("fopen");
     }
