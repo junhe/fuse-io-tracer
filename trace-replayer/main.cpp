@@ -13,6 +13,7 @@ using namespace std;
 
 class Entry {
     public:
+        string _hostname;
         pid_t  _pid;
         string _path;
         string _operation;
@@ -26,7 +27,8 @@ class Entry {
 
 void Entry::show() const
 {
-    cout << _pid << " "
+    cout << _hostname << " "
+         << _pid << " "
          << _path << " "
          << _operation << " "
          << _offset << " "
@@ -98,15 +100,19 @@ void Replayer::readTrace()
 
         char path[256];
         char operation[256];
+        char hostname[256];
         int ret = 0;
+        ret += fscanf(fp, "%s", hostname); 
+        entry._hostname = hostname;
+
         ret += fscanf(fp, "%u", &entry._pid);
+
         ret += fscanf(fp, "%s", path);
-        
         entry._path.assign(path);
         
         ret += fscanf(fp, "%s", operation);
-        
         entry._operation.assign(operation);
+
         ret += fscanf(fp, "%lld", &entry._offset);
         ret += fscanf(fp, "%d", &entry._length);
         
