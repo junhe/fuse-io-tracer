@@ -266,7 +266,7 @@ double Replayer::playTime()
 int main(int argc, char **argv)
 {
     if ( argc != 9 ) {
-        printf("Usage: %s trace-file output-file sleeptime customized-sleeptime do-pread do-whole-prefetch\
+        printf("Usage: %s trace-file data-file sleeptime customized-sleeptime do-pread do-whole-prefetch\
                 do-period-prefetch period\n", argv[0]);
         return 1;
     }
