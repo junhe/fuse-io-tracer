@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
-
+#include <iomanip>
 
 using namespace std;
 
@@ -52,13 +52,25 @@ class Replayer{
         int _period;
         int _do_period;
 
+        // Performance returned
+        off_t _preadbytes;
+        double _readtime;
+
         void readTrace();
         void play();
         double playTime();
         void prePlay();
         void postPlay();
         void prefetch();
+
+        Replayer();
 };
+
+Replayer::Replayer()
+    :_preadbytes(0),
+     _readtime(0)
+{}
+
 
 void Replayer::prefetch()
 {
@@ -226,7 +238,8 @@ void Replayer::play()
         free(data);
     }
 
-    cout << total << " " ;// "(" << total/1024 << "KB)" << endl;
+    //cout << total << " " ;// "(" << total/1024 << "KB)" << endl;
+    _preadbytes = total;
 }
 
 
@@ -259,12 +272,13 @@ double Replayer::playTime()
     gettimeofday(&end, NULL);
 
     timersub( &end, &start, &result );
-    printf("%ld.%.6ld\n", result.tv_sec, result.tv_usec);
+    //printf("%ld.%.6ld\n", result.tv_sec, result.tv_usec);
 
 
     postPlay();
 
-    return result.tv_sec + result.tv_usec/1000000;
+    _readtime = result.tv_sec + result.tv_usec/1000000.0;
+    return _readtime;
 }
 
 int main(int argc, char **argv)
@@ -287,14 +301,42 @@ int main(int argc, char **argv)
     replayer._do_period = atoi(argv[7]);
     replayer._period = atoi(argv[8]);
 
-    cout << replayer._trace_path << " ";
-    cout << replayer._data_path << " ";
-    cout << replayer._sleeptime << " ";
-    cout << replayer._customized_sleeptime << " ";
-    cout << replayer._do_pread << " ";
-
+    cout 
+        << setw(20) 
+        << "Trace.Path" 
+        << setw(20) 
+        << "Data.Path"
+        << setw(15) 
+        << "Sleep.Time"
+        << setw(25) 
+        << "Customize.Sleeptime?"
+        << setw(10) 
+        << "Do.Pread?"
+        << setw(15) 
+        << "Bytes.Pread" 
+        << setw(15) 
+        << "Read.Time" << endl;
 
     replayer.playTime();
+
+    cout 
+        << setw(20) 
+        << replayer._trace_path 
+        << setw(20) 
+        << replayer._data_path 
+        << setw(15) 
+        << replayer._sleeptime 
+        << setw(25) 
+        << replayer._customized_sleeptime 
+        << setw(10) 
+        << replayer._do_pread 
+        << setw(15) 
+        << replayer._preadbytes 
+        << setw(15) 
+        << replayer._readtime
+        << setw(15)
+        << "GREPMARKER" << endl;
+
     return 0;    
 }
 
