@@ -113,6 +113,9 @@ void Replayer::readTrace()
         ret += fscanf(fp, "%s", operation);
         entry._operation.assign(operation);
 
+        if ( entry._operation != "trc_read" ) 
+            continue; // skip non-read operations in this version
+
         ret += fscanf(fp, "%lld", &entry._offset);
         ret += fscanf(fp, "%d", &entry._length);
         
@@ -151,11 +154,11 @@ void Replayer::readTrace()
         ret += fscanf(fp, "%lf", &entry._end_time);
 #endif
 
-        if ( ret != 7 ) {
+        if ( ret != 8 ) {
             break;
         }
         
-        //entry.show();
+        entry.show();
 
         _trace.push_back( entry );
     }
@@ -181,6 +184,7 @@ void Replayer::play()
 
         if ( cit != _trace.begin() ) {
             // sleep to simulate computation
+            cit->show();
             vector<Entry>::const_iterator precit;
             precit = cit;
             precit--;
