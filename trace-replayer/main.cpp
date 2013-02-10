@@ -158,7 +158,7 @@ void Replayer::readTrace()
             break;
         }
         
-        entry.show();
+        //entry.show();
 
         _trace.push_back( entry );
     }
@@ -184,7 +184,7 @@ void Replayer::play()
 
         if ( cit != _trace.begin() ) {
             // sleep to simulate computation
-            cit->show();
+            //cit->show();
             vector<Entry>::const_iterator precit;
             precit = cit;
             precit--;
