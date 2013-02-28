@@ -232,7 +232,9 @@ void Replayer::play()
         }
 
         if ( _do_pread == 1 ) {
-            total += pread(_fd, data, cit->_length, cit->_offset);
+            int ret = pread(_fd, data, cit->_length, cit->_offset);
+            assert(ret != -1);
+            total += ret;
         }
 
         free(data);
