@@ -311,21 +311,28 @@ int main(int argc, char **argv)
         << setw(15) 
         << "Sleep.Time"
         << setw(25) 
-        << "Customize.Sleeptime?"
+        << "Customize.Sleeptime"
         << setw(10) 
-        << "Do.Pread?"
+        << "Do.Pread"
         << setw(15) 
         << "Bytes.Pread" 
         << setw(15) 
-        << "Read.Time" << endl;
+        << "Read.Time"
+        << setw(15)
+        << "Do.Prefetch"
+        << setw(10)
+        << "Do.Period"
+        << setw(10)
+        << "Period"
+        << endl;
 
     replayer.playTime();
 
     cout 
         << setw(20) 
-        << replayer._trace_path 
+        << replayer._trace_path.substr(0, 19)
         << setw(20) 
-        << replayer._data_path 
+        << replayer._data_path.substr(0,19)
         << setw(15) 
         << replayer._sleeptime 
         << setw(25) 
@@ -336,6 +343,12 @@ int main(int argc, char **argv)
         << replayer._preadbytes 
         << setw(15) 
         << replayer._readtime
+        << setw(15)
+        << replayer._do_prefetch
+        << setw(10)
+        << replayer._do_period
+        << setw(10)
+        << replayer._period
         << setw(15)
         << "GREPMARKER" << endl;
 

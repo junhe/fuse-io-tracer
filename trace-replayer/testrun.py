@@ -31,7 +31,7 @@ jobid = time.strftime("%Y-%m-%d-%H-%M-%S", time.gmtime())
 
 resultfilename = "results/" + jobid + ".result"
 resultfile = open(resultfilename, "w")
-resultfile.write("          Trace.Path           Data.Path     Sleep.Time     Customize.Sleeptime? Do.Pread?    Bytes.Pread      Read.Time Do.Period    Period Marker PatfuseType PreadTime PrefetchTime FadviseTime\n")
+resultfile.write("          Trace.Path           Data.Path     Sleep.Time      Customize.Sleeptime  Do.Pread    Bytes.Pread      Read.Time    Do.Prefetch Do.Period    Period Marker PatfuseType PreadTime PrefetchTime FadviseTime\n")
 
 logfilename = "logs/" + jobid + ".log"
 logfile = open(logfilename, "w")
