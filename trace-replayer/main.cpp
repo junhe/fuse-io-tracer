@@ -139,7 +139,6 @@ void Replayer::readTrace()
         ret += fscanf(fp, "%lf", &entry._start_time);
         ret += fscanf(fp, "%lf", &entry._end_time);
 
-        cout << "operation:" << operation << endl;
         if ( entry._operation != "trc_read" ) 
             continue; // skip non-read operations in this version
 
