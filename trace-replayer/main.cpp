@@ -125,46 +125,24 @@ void Replayer::readTrace()
         ret += fscanf(fp, "%s", operation);
         entry._operation.assign(operation);
 
+        if ( entry._operation == "trc_read" ||
+             entry._operation == "trc_write" ) 
+        {
+            ret += fscanf(fp, "%lld", &entry._offset);
+            ret += fscanf(fp, "%d", &entry._length);
+        } else {
+            char eater[128];
+            ret += fscanf(fp, "%s", eater);
+            ret += fscanf(fp, "%s", eater);
+        }
+
+        ret += fscanf(fp, "%lf", &entry._start_time);
+        ret += fscanf(fp, "%lf", &entry._end_time);
+
+        cout << "operation:" << operation << endl;
         if ( entry._operation != "trc_read" ) 
             continue; // skip non-read operations in this version
 
-        ret += fscanf(fp, "%lld", &entry._offset);
-        ret += fscanf(fp, "%d", &entry._length);
-        
-      
-#ifdef WRONGTIME_IN_TRACE
-        // start time
-        char tmpchar[64];
-        size_t pos;
-        string tmpstr;
-
-        // This part is only good for old FUSE tracer
-        // where the time printed out by %lld.%lld
-        ret += fscanf(fp, "%s", tmpchar);
-        tmpstr.assign(tmpchar);
-        
-        pos = tmpstr.find(".");
-        assert(pos != string::npos);
-       
-        while ( tmpstr.size() - pos < 7 ) {
-            tmpstr.insert(pos+1, "0");
-        }
-        entry._start_time = atof(tmpstr.c_str());
-
-        ret += fscanf(fp, "%s", tmpchar);
-        tmpstr.assign(tmpchar);
-        
-        pos = tmpstr.find(".");
-        assert(pos != string::npos);
-        
-        while ( tmpstr.size() - pos < 7 ) {
-            tmpstr.insert(pos+1, "0");
-        }
-        entry._end_time = atof(tmpstr.c_str());
-#else
-        ret += fscanf(fp, "%lf", &entry._start_time);
-        ret += fscanf(fp, "%lf", &entry._end_time);
-#endif
 
         if ( ret != 8 ) {
             break;
